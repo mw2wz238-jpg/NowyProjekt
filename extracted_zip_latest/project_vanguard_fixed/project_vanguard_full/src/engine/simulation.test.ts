@@ -68,7 +68,7 @@ test('map cleanup disposes owned geometry while keeping shared and non-map resou
   const mapGroup = new THREE.Group();
   mapGroup.name = 'env_test';
   const sharedGeometry = new THREE.BoxGeometry(1, 1, 1);
-  const sharedMaterial = Materials.get('snow_ground');
+  const sharedMaterial = Materials.get('weapon_matte_black');
   const sharedMesh = new THREE.Mesh(sharedGeometry, sharedMaterial);
   const ownedGeometry = new THREE.SphereGeometry(1);
   const ownedTexture = new THREE.Texture();

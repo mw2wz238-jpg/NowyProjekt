@@ -54,15 +54,23 @@ export class ParticleSystem {
 
     // Procedural soft circle sprite
     const canvas = document.createElement('canvas');
-    canvas.width = 32;
-    canvas.height = 32;
+    canvas.width = 128;
+    canvas.height = 128;
     const ctx = canvas.getContext('2d')!;
-    const grad = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
-    grad.addColorStop(0, 'rgba(255,255,255,1)');
-    grad.addColorStop(0.5, 'rgba(255,255,255,0.6)');
+    const grad = ctx.createRadialGradient(64, 64, 4, 64, 64, 64);
+    grad.addColorStop(0, 'rgba(255,255,255,0.92)');
+    grad.addColorStop(0.38, 'rgba(255,255,255,0.62)');
+    grad.addColorStop(0.72, 'rgba(255,255,255,0.18)');
     grad.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 32, 32);
+    ctx.fillRect(0, 0, 128, 128);
+    for (let i = 0; i < 180; i++) {
+      const radius = 2 + Math.random() * 8;
+      ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.035})`;
+      ctx.beginPath();
+      ctx.arc(Math.random() * 128, Math.random() * 128, radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
     const spriteTex = new THREE.CanvasTexture(canvas);
 
     const mat = new THREE.PointsMaterial({

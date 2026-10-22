@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MapId, BombSite } from '../types/game';
 import { Materials } from './materials';
 import { disposeObjectResources } from './resourceDisposal';
@@ -85,6 +86,7 @@ export class EnvironmentBuilder {
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.width = 2048;
     dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.normalBias = 0.025;
     dirLight.shadow.camera.near = 10;
     dirLight.shadow.camera.far = 350;
     dirLight.shadow.camera.left = -90;
@@ -102,6 +104,7 @@ export class EnvironmentBuilder {
     ground.receiveShadow = true;
     ground.name = 'env_ground';
     scene.add(ground);
+    this.createTireTracks(scene);
 
     // Construction Cranes (Multi-part lattice steel structures)
     this.createTowerCrane(scene, new THREE.Vector3(-45, 0, -50), 38, Math.PI / 6);
@@ -146,8 +149,12 @@ export class EnvironmentBuilder {
       box.receiveShadow = true;
       box.name = 'env_container';
       scene.add(box);
+      this.createContainerDetails(scene, box.position, box.rotation.y);
       this.addCollider(box, true, 'container', 0.55);
     });
+    this.createPolyhavenBarrels(scene, [
+      [-39, 0, -18, 0.2], [39, 0, -18, 1.1], [-39, 0, 20, 2.2], [39, 0, 20, 0.8],
+    ]);
 
     // Concrete Barricades & Tactical Cover Crates
     for (let i = 0; i < 22; i++) {
@@ -227,6 +234,8 @@ export class EnvironmentBuilder {
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.width = 2048;
     dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.bias = -0.0003;
+    dirLight.shadow.normalBias = 0.025;
     dirLight.name = 'env_dirLight';
     scene.add(dirLight);
 
@@ -324,6 +333,9 @@ export class EnvironmentBuilder {
     const dirLight = new THREE.DirectionalLight(0x3a5682, 0.5); // Moonlight
     dirLight.position.set(-60, 90, -40);
     dirLight.castShadow = true;
+    dirLight.shadow.mapSize.set(2048, 2048);
+    dirLight.shadow.bias = -0.0003;
+    dirLight.shadow.normalBias = 0.025;
     dirLight.name = 'env_dirLight';
     scene.add(dirLight);
 
@@ -382,8 +394,12 @@ export class EnvironmentBuilder {
       box.receiveShadow = true;
       box.name = 'env_container';
       scene.add(box);
+      this.createContainerDetails(scene, box.position, box.rotation.y);
       this.addCollider(box, true);
     });
+    this.createPolyhavenBarrels(scene, [
+      [-34, 0, -18, 0.4], [34, 0, -18, 1.4], [-34, 0, 20, 2.1], [34, 0, 20, 0.9],
+    ]);
 
     // Create Bomb Sites A & B
     const bombSiteA: BombSite = { id: 'A', position: { x: -24, y: 0, z: -5 }, radius: 7.5 };
@@ -491,6 +507,94 @@ export class EnvironmentBuilder {
 
     group.position.copy(pos);
     scene.add(group);
+  }
+
+  private createContainerDetails(scene: THREE.Scene, position: THREE.Vector3, rotation: number): void {
+    const details = new THREE.Group();
+    details.name = 'env_container_details';
+    details.position.copy(position);
+    details.rotation.y = rotation;
+
+    const longRibGeometry = new THREE.BoxGeometry(0.1, 2.68, 0.12);
+    const longRibs = new THREE.InstancedMesh(longRibGeometry, Materials.get('container_rib'), 40);
+    const endRibGeometry = new THREE.BoxGeometry(0.12, 2.68, 0.1);
+    const endRibs = new THREE.InstancedMesh(endRibGeometry, Materials.get('container_rib'), 20);
+    const postGeometry = new THREE.BoxGeometry(0.16, 2.8, 0.16);
+    const cornerPosts = new THREE.InstancedMesh(postGeometry, Materials.get('weapon_metal_blued'), 4);
+    const dummy = new THREE.Object3D();
+
+    let index = 0;
+    for (const side of [-1, 1]) {
+      for (let rib = 0; rib < 20; rib++) {
+        dummy.position.set(side * 3.12, 1.4, -5.7 + rib * 0.6);
+        dummy.updateMatrix();
+        longRibs.setMatrixAt(index++, dummy.matrix);
+      }
+    }
+    index = 0;
+    for (const end of [-1, 1]) {
+      for (let rib = 0; rib < 10; rib++) {
+        dummy.position.set(-2.65 + rib * 0.59, 1.4, end * 6.22);
+        dummy.updateMatrix();
+        endRibs.setMatrixAt(index++, dummy.matrix);
+      }
+    }
+    index = 0;
+    for (const x of [-3.05, 3.05]) {
+      for (const z of [-6.05, 6.05]) {
+        dummy.position.set(x, 1.4, z);
+        dummy.updateMatrix();
+        cornerPosts.setMatrixAt(index++, dummy.matrix);
+      }
+    }
+    for (const mesh of [longRibs, endRibs, cornerPosts]) {
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      details.add(mesh);
+    }
+    scene.add(details);
+  }
+
+  private createPolyhavenBarrels(scene: THREE.Scene, placements: [number, number, number, number][]): void {
+    const root = new THREE.Group();
+    root.name = 'env_polyhaven_barrels';
+    scene.add(root);
+
+    new GLTFLoader().load(
+      '/assets/polyhaven/Barrel_01/Barrel_01_2k.gltf',
+      (gltf) => {
+        if (root.parent !== scene) {
+          disposeObjectResources([gltf.scene]);
+          return;
+        }
+        for (const [x, y, z, rotation] of placements) {
+          const barrel = gltf.scene.clone(true);
+          barrel.name = 'env_polyhaven_barrel';
+          barrel.position.set(x, y, z);
+          barrel.rotation.y = rotation;
+          barrel.scale.setScalar(1.45);
+          barrel.traverse((object) => {
+            if (object instanceof THREE.Mesh) {
+              object.castShadow = true;
+              object.receiveShadow = true;
+            }
+          });
+          root.add(barrel);
+          barrel.updateMatrixWorld(true);
+          const bounds = new THREE.Box3().setFromObject(barrel);
+          this.colliders.push({
+            min: bounds.min.clone(),
+            max: bounds.max.clone(),
+            mesh: barrel,
+            isCover: true,
+            materialType: 'metal',
+            penetrationResistance: 0.55,
+          });
+        }
+      },
+      undefined,
+      () => root.removeFromParent()
+    );
   }
 
   private createTowerCrane(scene: THREE.Scene, pos: THREE.Vector3, height: number, armAngle: number) {
@@ -673,12 +777,37 @@ export class EnvironmentBuilder {
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
 
+    const spriteCanvas = document.createElement('canvas');
+    spriteCanvas.width = 32;
+    spriteCanvas.height = 64;
+    const spriteContext = spriteCanvas.getContext('2d')!;
+    if (mapId === 'night_docks') {
+      const rainGradient = spriteContext.createLinearGradient(16, 0, 16, 64);
+      rainGradient.addColorStop(0, 'rgba(255,255,255,0)');
+      rainGradient.addColorStop(0.3, 'rgba(210,230,255,0.65)');
+      rainGradient.addColorStop(0.7, 'rgba(210,230,255,0.75)');
+      rainGradient.addColorStop(1, 'rgba(255,255,255,0)');
+      spriteContext.fillStyle = rainGradient;
+      spriteContext.fillRect(12, 0, 8, 64);
+    } else {
+      const snowGradient = spriteContext.createRadialGradient(16, 32, 1, 16, 32, 16);
+      snowGradient.addColorStop(0, 'rgba(255,255,255,0.95)');
+      snowGradient.addColorStop(0.5, 'rgba(238,246,255,0.55)');
+      snowGradient.addColorStop(1, 'rgba(255,255,255,0)');
+      spriteContext.fillStyle = snowGradient;
+      spriteContext.fillRect(0, 16, 32, 32);
+    }
+    const weatherTexture = new THREE.CanvasTexture(spriteCanvas);
+    weatherTexture.colorSpace = THREE.SRGBColorSpace;
+
     const material = new THREE.PointsMaterial({
       color: mapId === 'night_docks' ? 0x99bbdd : 0xffffff,
-      size: mapId === 'night_docks' ? 0.18 : 0.28,
+      size: mapId === 'night_docks' ? 0.3 : 0.38,
+      map: weatherTexture,
       transparent: true,
       opacity: mapId === 'night_docks' ? 0.65 : 0.85,
-      blending: THREE.AdditiveBlending,
+      blending: mapId === 'night_docks' ? THREE.NormalBlending : THREE.AdditiveBlending,
+      alphaTest: 0.02,
       depthWrite: false,
     });
 
@@ -686,6 +815,30 @@ export class EnvironmentBuilder {
     weatherPoints.name = 'env_weather';
     scene.add(weatherPoints);
     return weatherPoints;
+  }
+
+  private createTireTracks(scene: THREE.Scene): void {
+    const tracks = new THREE.Group();
+    tracks.name = 'env_tire_tracks';
+    const trackMaterial = new THREE.MeshBasicMaterial({
+      color: 0x111519,
+      transparent: true,
+      opacity: 0.2,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+    });
+    const trackGeometry = new THREE.PlaneGeometry(0.22, 24);
+    for (const x of [-42, 42]) {
+      for (const offset of [-0.32, 0.32]) {
+        const track = new THREE.Mesh(trackGeometry, trackMaterial);
+        track.rotation.x = -Math.PI / 2;
+        track.rotation.z = (x < 0 ? 1 : -1) * 0.025;
+        track.position.set(x + offset, 0.025, 0);
+        tracks.add(track);
+      }
+    }
+    scene.add(tracks);
   }
 
   public updateWeather(weatherMesh: THREE.Points | null, dt: number, mapId: MapId) {

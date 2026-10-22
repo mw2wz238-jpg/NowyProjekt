@@ -388,6 +388,16 @@ export class SimulationEngine {
       roughness: 0.4,
       metalness: 0.6,
     });
+    const gearMat = new THREE.MeshStandardMaterial({
+      color: bot.team === 'VANGUARD' ? 0x3a4a50 : 0x3a3030,
+      roughness: 0.82,
+      metalness: 0.04,
+    });
+    const trimMat = new THREE.MeshStandardMaterial({
+      color: bot.team === 'VANGUARD' ? 0x8b9a9c : 0xb18b69,
+      roughness: 0.65,
+      metalness: 0.12,
+    });
 
     // Torso / Vest
     const torsoScale = bot.role === 'juggernaut' ? 1.4 : 1.0;
@@ -395,6 +405,30 @@ export class SimulationEngine {
     torso.position.y = 1.05 * torsoScale;
     torso.castShadow = true;
     group.add(torso);
+
+    const chestPlate = new THREE.Mesh(
+      new THREE.BoxGeometry(0.38 * torsoScale, 0.38 * torsoScale, 0.035 * torsoScale),
+      gearMat
+    );
+    chestPlate.position.set(0, 1.1 * torsoScale, 0.19 * torsoScale);
+    chestPlate.castShadow = true;
+    group.add(chestPlate);
+
+    const pouchGeometry = new THREE.BoxGeometry(0.1 * torsoScale, 0.13 * torsoScale, 0.09 * torsoScale);
+    for (let pouch = 0; pouch < 3; pouch++) {
+      const magPouch = new THREE.Mesh(pouchGeometry, gearMat);
+      magPouch.position.set((pouch - 1) * 0.12 * torsoScale, 0.88 * torsoScale, 0.2 * torsoScale);
+      magPouch.castShadow = true;
+      group.add(magPouch);
+    }
+
+    const backpack = new THREE.Mesh(
+      new THREE.BoxGeometry(0.38 * torsoScale, 0.48 * torsoScale, 0.16 * torsoScale),
+      gearMat
+    );
+    backpack.position.set(0, 1.25 * torsoScale, -0.23 * torsoScale);
+    backpack.castShadow = true;
+    group.add(backpack);
 
     // Head & Tactical Helmet
     const head = new THREE.Mesh(new THREE.BoxGeometry(0.3 * torsoScale, 0.32 * torsoScale, 0.3 * torsoScale), uniformMat);
@@ -426,6 +460,31 @@ export class SimulationEngine {
     const rArm = new THREE.Mesh(new THREE.BoxGeometry(0.16 * torsoScale, 0.65 * torsoScale, 0.16 * torsoScale), uniformMat);
     rArm.position.set(0.35 * torsoScale, 1.0 * torsoScale, 0.15 * torsoScale);
     group.add(rArm);
+
+    for (const side of [-1, 1]) {
+      const shoulderPad = new THREE.Mesh(
+        new THREE.BoxGeometry(0.2 * torsoScale, 0.19 * torsoScale, 0.2 * torsoScale),
+        vestMat
+      );
+      shoulderPad.position.set(side * 0.36 * torsoScale, 1.32 * torsoScale, 0.08 * torsoScale);
+      shoulderPad.castShadow = true;
+      group.add(shoulderPad);
+
+      const kneePad = new THREE.Mesh(
+        new THREE.BoxGeometry(0.17 * torsoScale, 0.14 * torsoScale, 0.055 * torsoScale),
+        gearMat
+      );
+      kneePad.position.set(side * 0.16 * torsoScale, 0.42 * torsoScale, 0.12 * torsoScale);
+      kneePad.castShadow = true;
+      group.add(kneePad);
+    }
+
+    const teamPatch = new THREE.Mesh(
+      new THREE.BoxGeometry(0.12 * torsoScale, 0.09 * torsoScale, 0.018 * torsoScale),
+      trimMat
+    );
+    teamPatch.position.set(-0.2 * torsoScale, 1.28 * torsoScale, 0.19 * torsoScale);
+    group.add(teamPatch);
 
     // Legs
     const lLeg = new THREE.Mesh(new THREE.BoxGeometry(0.2 * torsoScale, 0.75 * torsoScale, 0.2 * torsoScale), uniformMat);
