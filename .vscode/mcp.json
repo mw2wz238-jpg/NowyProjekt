@@ -1,0 +1,17 @@
+{
+  "servers": {
+    "blenderwright": {
+      "type": "stdio",
+      "command": "python3",
+      "args": [
+        "-m",
+        "uv",
+        "tool",
+        "run",
+        "--python",
+        "3.13",
+        "blenderwright"
+      ]
+    }
+  }
+}
