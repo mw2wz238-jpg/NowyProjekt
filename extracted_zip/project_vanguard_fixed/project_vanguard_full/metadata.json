@@ -1,0 +1,6 @@
+{
+  "name": "Project Vanguard — AAA Tactical FPS",
+  "description": "Profesjonalny, komercyjny taktyczny shooter 3D FPS z autorytatywnym cyklem rund (Buy, Live, Combat, Spectator, Round End, Rewards), systemem uzbrojenia Gunsmith, grafiką PBR WebGL2 i zaawansowanym AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
