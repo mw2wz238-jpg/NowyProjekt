@@ -4,13 +4,15 @@
     // Aby uzyskać więcej informacji, odwiedź stronę: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        
+    
         {
-            "type": "chrome",
+            "type": "node",
             "request": "launch",
-            "name": "Uruchom przeglądarkę Chrome względem hosta lokalnego",
-            "url": "http://localhost:8080",
-            "webRoot": "${workspaceFolder}"
+            "name": "Uruchom program",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${file}"
         }
     ]
 }

@@ -161,6 +161,25 @@ export class WeaponModelBuilder {
       handguard.position.set(0, 0.005, 0.26);
       root.add(handguard);
 
+      const handguardSlot = new THREE.BoxGeometry(0.003, 0.008, 0.024);
+      for (const side of [-1, 1]) {
+        for (let slot = 0; slot < 6; slot++) {
+          const vent = new THREE.Mesh(handguardSlot, blackMat);
+          vent.position.set(side * 0.022, 0.006, 0.16 + slot * 0.038);
+          root.add(vent);
+        }
+      }
+
+      const receiverPinGeometry = new THREE.CylinderGeometry(0.006, 0.006, 0.003, 12);
+      for (const side of [-1, 1]) {
+        for (const z of [-0.085, 0.075]) {
+          const pin = new THREE.Mesh(receiverPinGeometry, metalMat);
+          pin.rotation.z = Math.PI / 2;
+          pin.position.set(side * 0.024, 0.008, z);
+          root.add(pin);
+        }
+      }
+
       // Barrel
       const isSuppressed = attachments.barrel === 'suppressed';
       const barrelLen = isSuppressed ? 0.22 : 0.28;

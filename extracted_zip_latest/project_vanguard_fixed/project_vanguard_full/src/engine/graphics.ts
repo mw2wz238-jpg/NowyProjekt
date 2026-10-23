@@ -1,4 +1,5 @@
 import { GraphicsQuality } from '../settings';
+import { MapId } from '../types/game';
 
 export interface GraphicsProfile {
   quality: Exclude<GraphicsQuality, 'auto'>;
@@ -62,4 +63,10 @@ export const getRendererPixelRatio = (
     0.5,
     Math.min(safeDevicePixelRatio * profile.resolutionScale, profile.maxPixelRatio)
   );
+};
+
+export const getSceneExposure = (mapId: MapId): number => {
+  if (mapId === 'night_docks') return 1.3;
+  if (mapId === 'winter_village') return 1.05;
+  return 1.15;
 };

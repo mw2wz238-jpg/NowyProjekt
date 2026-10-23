@@ -7,7 +7,8 @@ import { ParticleSystem } from './engine/particles';
 import { SimulationEngine } from './engine/simulation';
 import { PlayerController } from './engine/player';
 import { Sound } from './engine/audio';
-import { getRendererPixelRatio, resolveGraphicsProfile } from './engine/graphics';
+import { Materials } from './engine/materials';
+import { getRendererPixelRatio, getSceneExposure, resolveGraphicsProfile } from './engine/graphics';
 import { readGamepadInput } from './engine/gamepad';
 import { WEAPON_REGISTRY, DEFAULT_ATTACHMENTS } from './engine/weapons';
 
@@ -291,7 +292,8 @@ export default function App() {
     renderer.setPixelRatio(getRendererPixelRatio(window.devicePixelRatio, initialGraphicsProfile));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.15;
+    renderer.toneMappingExposure = getSceneExposure(currentMapRef.current);
+    Materials.setAnisotropy(renderer.capabilities.getMaxAnisotropy());
     renderer.shadowMap.enabled = initialGraphicsProfile.shadowsEnabled;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     canvas.appendChild(renderer.domElement);
@@ -664,6 +666,9 @@ export default function App() {
   useEffect(() => {
     if (!sceneRef.current || !simRef.current || !playerRef.current) return;
     const envData = envBuilderRef.current.buildMap(sceneRef.current, currentMap);
+    if (rendererRef.current) {
+      rendererRef.current.toneMappingExposure = getSceneExposure(currentMap);
+    }
     simRef.current.colliders = envData.colliders;
     simRef.current.bombSiteA = envData.bombSiteA;
     simRef.current.bombSiteB = envData.bombSiteB;
